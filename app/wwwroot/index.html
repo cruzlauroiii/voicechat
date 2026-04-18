@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+  <title>AIRI Voice Chat</title>
+  <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2d.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<!-- Header with burger menu -->
+<div class="header">
+  <button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
+  <span id="ttsStatus" style="font-size:.68em;color:#888;margin-left:auto"></span>
+  <span class="status" id="status"></span>
+</div>
+
+<!-- Side navigation -->
+<div class="nav-overlay" id="navOverlay"></div>
+<div class="nav" id="nav">
+  <div class="nav-header"><h2>AIRI</h2><button class="nav-close" onclick="closeNav()">&times;</button></div>
+  <div class="nav-body">
+    <div class="nav-item" onclick="window.draw('voice')">Voice</div>
+    <div class="nav-item" onclick="window.draw('model')">Model</div>
+    <div class="nav-item" onclick="window.draw('customize')">Customize Avatar</div>
+    <div class="nav-item" onclick="window.draw('settings')">Settings</div>
+  </div>
+</div>
+
+<!-- Chat -->
+<div class="chat">
+  <div class="msgs" id="msgs"></div>
+  <div id="bar"></div>
+  <div class="ci"><input id="inp" placeholder="Say something..." onkeydown="if(event.key==='Enter')window.send()"><button id="btn" onclick="window.send()">Send</button></div>
+</div>
+
+<!-- Drawer panel -->
+<div class="dw" id="dw">
+  <div class="dw-h"><h2 id="dwt">Settings</h2><button class="dw-x" onclick="window.closeDw()">&times;</button></div>
+  <div class="dw-b" id="dwb"></div>
+</div>
+
+<!-- Voice label (hidden, used by JS) -->
+<span id="voiceLabel" style="display:none"></span>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

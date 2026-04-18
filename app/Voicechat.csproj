@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFrameworks>net11.0-android36.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationTitle>AIRI</ApplicationTitle>
+    <ApplicationId>com.cruzlauroiii.voicechat</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>3</ApplicationVersion>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <PublishTrimmed>false</PublishTrimmed>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">29.0</SupportedOSPlatformVersion>
+    <SkipValidateMauiImplicitPackageReferences>true</SkipValidateMauiImplicitPackageReferences>
+  </PropertyGroup>
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0a0a1a" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0a0a1a" BaseSize="128,128" />
+    <MauiFont Include="Resources\Fonts\*" />
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+    <Analyzer Include="..\analyzers\bin\Release\netstandard2.0\analyzers.dll" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
+    <Reference Include="Microsoft.Extensions.DependencyInjection" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.DependencyInjection.dll" />
+    <Reference Include="Microsoft.Extensions.Hosting.Abstractions" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Hosting.Abstractions.dll" />
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Logging.Abstractions.dll" />
+    <Reference Include="Microsoft.Extensions.Logging" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Logging.dll" />
+    <Reference Include="Microsoft.Extensions.Options" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Options.dll" />
+    <Reference Include="Microsoft.Extensions.Configuration.Abstractions" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Configuration.Abstractions.dll" />
+    <Reference Include="Microsoft.Extensions.Configuration" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Configuration.dll" />
+    <Reference Include="Microsoft.Extensions.Diagnostics.Abstractions" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Diagnostics.Abstractions.dll" />
+    <Reference Include="Microsoft.Extensions.FileProviders.Abstractions" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.FileProviders.Abstractions.dll" />
+    <Reference Include="Microsoft.Extensions.Primitives" HintPath="C:\work\dotnet\maui\.buildtasks\Microsoft.Extensions.Primitives.dll" />
+  </ItemGroup>
+</Project>

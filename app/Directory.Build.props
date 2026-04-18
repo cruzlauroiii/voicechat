@@ -1,0 +1,6 @@
+<Project>
+    <PropertyGroup>
+        <AndroidSdkDirectory Condition="Exists('C:\work\android-sdk')">C:\work\android-sdk</AndroidSdkDirectory>
+        <JavaSdkDirectory Condition="Exists('C:\work\jdk')">C:\work\jdk</JavaSdkDirectory>
+    </PropertyGroup>
+</Project>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avatar Customizer</title>
+  <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a1a; color: #e0e0e0; display: flex; height: 100vh; overflow: hidden; }
+    .canvas-area { flex: 1; position: relative; }
+    #live2d-canvas { width: 100%; height: 100%; cursor: grab; }
+    #live2d-canvas:active { cursor: grabbing; }
+    .controls-overlay { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; z-index: 10; }
+    .controls-overlay button { padding: 6px 12px; background: #1a1a2ecc; border: 1px solid #3a3a5a; border-radius: 8px; color: #ccc; cursor: pointer; font-size: 0.8em; backdrop-filter: blur(8px); }
+    .controls-overlay button:hover { border-color: #c084fc; color: #fff; }
+    .hint { position: absolute; bottom: 10px; left: 10px; font-size: 0.75em; color: #555; z-index: 10; }
+    .sidebar { width: 380px; background: #111125; border-left: 1px solid #1a1a3a; display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar h1 { padding: 16px 20px 8px; font-size: 1.2em; background: linear-gradient(135deg, #ff6b9d, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sidebar .tabs { display: flex; border-bottom: 1px solid #1a1a3a; }
+    .sidebar .tabs button { flex: 1; padding: 10px; background: transparent; border: none; color: #888; cursor: pointer; font-size: 0.85em; border-bottom: 2px solid transparent; }
+    .sidebar .tabs button.active { color: #c084fc; border-bottom-color: #c084fc; }
+    .tab-content { flex: 1; overflow-y: auto; padding: 12px 16px; }
+    .tab-content::-webkit-scrollbar { width: 6px; }
+    .tab-content::-webkit-scrollbar-thumb { background: #3a3a5a; border-radius: 3px; }
+    .param-group { margin-bottom: 16px; }
+    .param-group h3 { font-size: 0.8em; color: #c084fc; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .param-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .param-row label { font-size: 0.78em; color: #aaa; width: 140px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .param-row input[type=range] { flex: 1; accent-color: #c084fc; height: 4px; }
+    .param-row .val { font-size: 0.75em; color: #666; width: 40px; text-align: right; }
+    .model-url-row { display: flex; gap: 6px; margin-bottom: 12px; }
+    .model-url-row input { flex: 1; padding: 6px 10px; background: #0f0f23; border: 1px solid #2a2a4a; border-radius: 6px; color: #e0e0e0; font-size: 0.8em; outline: none; }
+    .model-url-row button { padding: 6px 12px; background: linear-gradient(135deg, #c084fc, #60a5fa); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.8em; }
+    .part-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .part-row label { font-size: 0.78em; color: #aaa; flex: 1; }
+    .part-row input[type=range] { width: 80px; accent-color: #c084fc; }
+    .back-link { padding: 8px 20px; font-size: 0.8em; }
+    .back-link a { color: #60a5fa; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="canvas-area">
+    <canvas id="live2d-canvas"></canvas>
+    <div class="controls-overlay">
+      <button onclick="resetView()">Reset View</button>
+      <button onclick="zoomIn()">Zoom +</button>
+      <button onclick="zoomOut()">Zoom -</button>
+      <button onclick="focusFace()">Face Close-up</button>
+    </div>
+    <div class="hint">Scroll to zoom | Drag to pan | Click model to interact</div>
+  </div>
+
+  <div class="sidebar">
+    <div class="back-link"><a href="index.html">Back to Voice Chat</a></div>
+    <h1>Avatar Customizer</h1>
+
+    <div class="tabs">
+      <button class="active" onclick="switchTab('params',this)">Parameters</button>
+      <button onclick="switchTab('parts',this)">Parts</button>
+      <button onclick="switchTab('model',this)">Model</button>
+    </div>
+
+    <div class="tab-content" id="tab-params" style="display:block;">
+      <div id="paramList"></div>
+    </div>
+    <div class="tab-content" id="tab-parts" style="display:none;">
+      <div id="partList"></div>
+    </div>
+    <div class="tab-content" id="tab-model" style="display:none;">
+      <p style="font-size:0.85em;color:#888;margin-bottom:12px;">Load a custom Live2D model by URL (.model3.json)</p>
+      <div class="model-url-row">
+        <input type="text" id="modelUrl" placeholder="https://...model3.json" value="https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json">
+        <button onclick="loadModel()">Load</button>
+      </div>
+      <p style="font-size:0.75em;color:#666;">Sample models:</p>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">
+        <a href="#" onclick="loadSample('haru')" style="color:#60a5fa;font-size:0.8em;text-decoration:none;">Haru (Cubism 4)</a>
+        <a href="#" onclick="loadSample('shizuku')" style="color:#60a5fa;font-size:0.8em;text-decoration:none;">Shizuku (Cubism 2)</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let model = null, app = null
+    let viewX = 0, viewY = 0, viewScale = 1
+    let dragging = false, lastMouse = { x: 0, y: 0 }
+
+    const SAMPLE_MODELS = {
+      haru: 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json',
+      shizuku: 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/shizuku/shizuku.model.json',
+    }
+
+    // ── Init ──
+    async function init() {
+      const canvas = document.getElementById('live2d-canvas')
+      app = new PIXI.Application({ view: canvas, resizeTo: canvas.parentElement, backgroundAlpha: 0, antialias: true })
+
+      // Mouse controls
+      canvas.addEventListener('wheel', (e) => { e.preventDefault(); const delta = e.deltaY > 0 ? 0.9 : 1.1; viewScale *= delta; applyView() }, { passive: false })
+      const down=(x,y)=>{dragging=true;lastMouse={x,y};canvas.style.cursor='grabbing'}
+      const move=(x,y)=>{if(!dragging)return;viewX+=x-lastMouse.x;viewY+=y-lastMouse.y;lastMouse={x,y};applyView()}
+      const up=()=>{dragging=false;canvas.style.cursor='grab'}
+      canvas.addEventListener('mousedown',e=>down(e.clientX,e.clientY))
+      canvas.addEventListener('mousemove',e=>move(e.clientX,e.clientY))
+      canvas.addEventListener('mouseup',up);canvas.addEventListener('mouseleave',up)
+      canvas.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];down(t.clientX,t.clientY)},{passive:false})
+      canvas.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];move(t.clientX,t.clientY)},{passive:false})
+      canvas.addEventListener('touchend',up)
+
+      // Keyboard
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '+' || e.key === '=') { viewScale *= 1.1; applyView() }
+        if (e.key === '-') { viewScale *= 0.9; applyView() }
+        if (e.key === 'ArrowUp') { viewY -= 20; applyView() }
+        if (e.key === 'ArrowDown') { viewY += 20; applyView() }
+        if (e.key === 'ArrowLeft') { viewX -= 20; applyView() }
+        if (e.key === 'ArrowRight') { viewX += 20; applyView() }
+        if (e.key === 'r') resetView()
+        if (e.key === 'f') focusFace()
+      })
+
+      await loadModel()
+    }
+
+    function applyView() {
+      if (!model) return
+      const baseScale = Math.min(app.screen.width, app.screen.height) / model.height * 0.7
+      model.scale.set(baseScale * viewScale)
+      model.x = app.screen.width / 2 + viewX
+      model.y = app.screen.height / 2 + viewY + model.height * baseScale * viewScale * 0.3
+    }
+
+    window.resetView = () => { viewX = 0; viewY = 0; viewScale = 1; applyView() }
+    window.zoomIn = () => { viewScale *= 1.3; applyView() }
+    window.zoomOut = () => { viewScale *= 0.7; applyView() }
+    window.focusFace = () => { viewScale = 2.5; viewY = -app.screen.height * 0.4; viewX = 0; applyView() }
+
+    // ── Load Model ──
+    window.loadModel = async function() {
+      const url = document.getElementById('modelUrl').value.trim()
+      if (!url) return
+      if (model) { app.stage.removeChild(model); model.destroy() }
+      try {
+        model = await PIXI.live2d.Live2DModel.from(url, { autoInteract: true, autoUpdate: true })
+        model.anchor.set(0.5, 0.5)
+        app.stage.addChild(model)
+        applyView()
+        model.on('hit', (areas) => { if (areas.includes('body')) model.motion('tap_body'); if (areas.includes('head')) model.motion('flick_head') })
+        buildParamUI()
+        buildPartUI()
+      } catch (e) { console.error('Load failed:', e); alert('Failed to load model: ' + e.message) }
+    }
+
+    window.loadSample = (name) => { document.getElementById('modelUrl').value = SAMPLE_MODELS[name]; loadModel() }
+
+    // ── Parameter UI ──
+    function buildParamUI() {
+      const container = document.getElementById('paramList')
+      container.innerHTML = ''
+      try {
+        const cm = model.internalModel.coreModel
+        // Try Cubism 4 API first, fallback to Cubism 2
+        const count = typeof cm.getParameterCount === 'function' ? cm.getParameterCount() : (cm._parameterCount || 0)
+        const groups = {}
+        for (let i = 0; i < count; i++) {
+          try {
+            const id = typeof cm.getParameterId === 'function' ? cm.getParameterId(i) : ('param_' + i)
+            const min = typeof cm.getParameterMinimumValue === 'function' ? cm.getParameterMinimumValue(i) : -30
+            const max = typeof cm.getParameterMaximumValue === 'function' ? cm.getParameterMaximumValue(i) : 30
+            const val = typeof cm.getParameterValue === 'function' ? cm.getParameterValue(i) : 0
+            const cat = id.startsWith('Param') ? id.replace('Param','').replace(/[A-Z]/g, ' $&').trim().split(' ')[0] : 'Other'
+            if (!groups[cat]) groups[cat] = []
+            groups[cat].push({ id, i, min, max, val })
+          } catch (e) { continue }
+        }
+        for (const [cat, params] of Object.entries(groups)) {
+          const group = document.createElement('div')
+          group.className = 'param-group'
+          group.innerHTML = '<h3>' + cat + '</h3>'
+          for (const p of params) {
+            const row = document.createElement('div')
+            row.className = 'param-row'
+            row.innerHTML = '<label title="' + p.id + '">' + p.id.replace('Param','') + '</label><input type="range" min="' + p.min + '" max="' + p.max + '" step="0.01" value="' + p.val + '"><span class="val">' + p.val.toFixed(1) + '</span>'
+            const slider = row.querySelector('input')
+            const valSpan = row.querySelector('.val')
+            const pid = p.id
+            slider.addEventListener('input', () => {
+              const v = parseFloat(slider.value)
+              try { cm.setParameterValueById(pid, v) } catch { try { cm.setParameterValueByIndex(p.i, v) } catch {} }
+              valSpan.textContent = v.toFixed(1)
+            })
+            group.appendChild(row)
+          }
+          container.appendChild(group)
+        }
+        if (count === 0) container.innerHTML = '<p style="color:#888;">No parameters found</p>'
+      } catch (e) { container.innerHTML = '<p style="color:#f87171;">Error: ' + e.message + '</p>' }
+    }
+
+    // ── Parts UI ──
+    function buildPartUI() {
+      const container = document.getElementById('partList')
+      container.innerHTML = ''
+      try {
+        const cm = model.internalModel.coreModel
+        const count = typeof cm.getPartCount === 'function' ? cm.getPartCount() : 0
+        for (let i = 0; i < count; i++) {
+          try {
+            const id = typeof cm.getPartId === 'function' ? cm.getPartId(i) : ('part_' + i)
+            const opacity = typeof cm.getPartOpacityByIndex === 'function' ? cm.getPartOpacityByIndex(i) : 1
+            const row = document.createElement('div')
+            row.className = 'part-row'
+            row.innerHTML = '<label title="' + id + '">' + id + '</label><input type="range" min="0" max="1" step="0.01" value="' + opacity + '"><span class="val" style="font-size:0.75em;color:#666;width:30px;text-align:right;">' + opacity.toFixed(1) + '</span>'
+            const slider = row.querySelector('input')
+            const valSpan = row.querySelector('.val')
+            slider.addEventListener('input', () => {
+              const v = parseFloat(slider.value)
+              try { cm.setPartOpacityByIndex(i, v) } catch {}
+              valSpan.textContent = v.toFixed(1)
+            })
+            container.appendChild(row)
+          } catch (e) { continue }
+        }
+        if (count === 0) container.innerHTML = '<p style="color:#888;">No parts found</p>'
+      } catch (e) { container.innerHTML = '<p style="color:#f87171;">Error: ' + e.message + '</p>' }
+    }
+
+    // ── Tabs ──
+    window.switchTab = (name, btn) => {
+      document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none')
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'))
+      document.getElementById('tab-' + name).style.display = 'block'
+      btn.classList.add('active')
+    }
+
+    init()
+  </script>
+</body>
+</html>

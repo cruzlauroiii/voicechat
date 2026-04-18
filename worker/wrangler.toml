@@ -1,0 +1,7 @@
+name = "voicechat"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[[migrations]]
+tag = "v2"
+deleted_classes = ["Room"]
